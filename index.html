@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trívia do Rabanete 🌱</title>
+<style>
+:root {
+  --primary-green: #2E8B57;
+  --light-green: #E8F5E9;
+  --hover-green: #C8E6C9;
+  --earth-brown: #8B4513;
+  --text-dark: #333333;
+  --bg-color: #F4F7F4;
+  --correct: #4CAF50;
+  --incorrect: #F44336;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background-color: var(--bg-color); color: var(--text-dark); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.container { background-color: #fff; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,.1); max-width: 600px; width: 100%; overflow: hidden; }
+.header-image { height: 200px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; background: linear-gradient(135deg, #d9edce 0%, #eff7e9 45%, #f8e7d4 100%); border-bottom: 4px solid var(--primary-green); }
+.header-image .plant { font-size: 76px; line-height: 1; }
+.header-image .caption { color: #386342; font-size: 14px; font-weight: 600; letter-spacing: .5px; }
+.quiz-content { padding: 30px; }
+h1 { color: var(--primary-green); text-align: center; margin-bottom: 20px; font-size: 1.8rem; }
+.progress { text-align: right; font-size: .9rem; color: #666; margin-bottom: 16px; }
+.question-text { font-size: 1.2rem; font-weight: 600; line-height: 1.45; margin-bottom: 20px; }
+.options { display: grid; gap: 12px; }
+.option { width:100%; text-align:left; padding: 14px 16px; border: 2px solid var(--primary-green); border-radius: 8px; background: var(--light-green); color: var(--text-dark); font-size: 1rem; cursor:pointer; transition: background .15s; }
+.option:hover:not(:disabled) { background: var(--hover-green); }
+.option:disabled { cursor:default; }
+.feedback { display:none; margin-top:18px; padding:14px; border-radius:8px; line-height:1.5; }
+.next { display:none; margin-top:18px; padding:12px 20px; background:var(--primary-green); color:#fff; border:0; border-radius:8px; font-size:1rem; cursor:pointer; }
+.next:hover { background:#246b43; }
+footer { text-align:center; color:#777; font-size:12px; padding:0 20px 22px; }
+@media (max-width:480px) { .quiz-content { padding:22px; } h1 { font-size:1.55rem; } }
+</style>
+</head>
+<body>
+<main class="container">
+  <div class="header-image" aria-label="Ilustração de rabanete">
+    <div class="plant">🌱🔴</div>
+    <div class="caption">APRENDA A CULTIVAR</div>
+  </div>
+  <section class="quiz-content">
+    <h1>Trívia do Rabanete 🌱</h1>
+    <div class="progress" id="progress">Pergunta 1 de 5</div>
+    <div class="question-text" id="question"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback" role="status"></div>
+    <button class="next" id="next" type="button">Próxima pergunta →</button>
+  </section>
+  <footer>Projeto acadêmico sobre o cultivo do rabanete</footer>
+</main>
+<script>
+const questions = [
+  { q: "1. Como começa o plantio do rabanete?", a: ["Semear as sementes em terra adequada e úmida", "Deixar as sementes mergulhadas em água por vários dias", "Colocar as sementes sobre uma superfície seca"], correct: 0, explanation: "O rabanete é plantado por semeadura, em solo solto, com boa drenagem e umidade." },
+  { q: "2. Como a terra deve ficar durante o cultivo?", a: ["Sempre encharcada", "Úmida, mas sem água acumulada", "Completamente seca"], correct: 1, explanation: "A umidade regular ajuda o desenvolvimento, enquanto o excesso de água pode prejudicar as raízes." },
+  { q: "3. O que ajuda o rabanete a crescer?", a: ["Luz adequada, água e solo com nutrientes", "Somente escuridão", "Apenas água, sem terra"], correct: 0, explanation: "A planta precisa de luz, água e condições adequadas de solo para se desenvolver." },
+  { q: "4. Por que fazer furos no fundo do copo ou vaso?", a: ["Para a terra escapar toda", "Para a água em excesso conseguir sair", "Para impedir o crescimento das raízes"], correct: 1, explanation: "Os furos permitem a drenagem e ajudam a evitar que a terra fique encharcada." },
+  { q: "5. Qual parte do rabanete costuma ser consumida?", a: ["A raiz engrossada", "Somente as flores", "Apenas as sementes"], correct: 0, explanation: "O rabanete é cultivado principalmente por sua raiz engrossada, normalmente vermelha e de polpa clara." }
+];
+let current = 0, score = 0, answered = false;
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const feedbackEl = document.getElementById("feedback");
+const nextBtn = document.getElementById("next");
+const progressEl = document.getElementById("progress");
+function renderQuestion() {
+  answered = false;
+  progressEl.textContent = `Pergunta ${current + 1} de ${questions.length}`;
+  questionEl.textContent = questions[current].q;
+  optionsEl.innerHTML = "";
+  feedbackEl.style.display = "none";
+  nextBtn.style.display = "none";
+  questions[current].a.forEach((answer, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "option";
+    button.textContent = answer;
+    button.addEventListener("click", () => chooseAnswer(index));
+    optionsEl.appendChild(button);
+  });
+}
+function chooseAnswer(index) {
+  if (answered) return;
+  answered = true;
+  const item = questions[current];
+  const correct = index === item.correct;
+  if (correct) score++;
+  [...optionsEl.children].forEach((button, i) => {
+    button.disabled = true;
+    if (i === item.correct) button.style.borderColor = "var(--correct)";
+    if (i === index && !correct) button.style.borderColor = "var(--incorrect)";
+  });
+  feedbackEl.style.display = "block";
+  feedbackEl.style.background = correct ? "#E8F5E9" : "#FFF0ED";
+  feedbackEl.textContent = (correct ? "Muito bem! " : "Vamos aprender: ") + item.explanation;
+  nextBtn.style.display = "inline-block";
+  nextBtn.textContent = current === questions.length - 1 ? "Ver resultado" : "Próxima pergunta →";
+}
+nextBtn.addEventListener("click", () => {
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion();
+  } else if (nextBtn.textContent === "Refazer quiz") {
+    current = 0; score = 0; renderQuestion();
+  } else {
+    progressEl.textContent = "Quiz concluído";
+    questionEl.textContent = `Você acertou ${score} de ${questions.length} perguntas!`;
+    optionsEl.innerHTML = "";
+    feedbackEl.style.display = "block";
+    feedbackEl.style.background = "#E8F5E9";
+    feedbackEl.textContent = "Obrigado por participar da trívia sobre o cultivo do rabanete.";
+    nextBtn.textContent = "Refazer quiz";
+  }
+});
+renderQuestion();
+</script>
+</body>
+</html>
